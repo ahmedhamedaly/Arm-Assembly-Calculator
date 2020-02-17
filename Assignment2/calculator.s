@@ -16,12 +16,13 @@ IO1PIN  EQU 0xE0028010
 ; @PARAMETERS: args[]
 ; @RETURNS: 0
 ;
-BL initSerial
+  BL initSerial ; init[serials]
 
-while BL getKey
-  BL handleKey
-  BL displayN
- B  while
+while           ; while (True) {
+  BL getKey     ; getKey()
+  BL handleKey  ; handleKey(key)
+  BL displayN   ; displayN(n)
+  B  while      ; }
 
 ; getKey
 ; @PARAMETERS: None
