@@ -16,8 +16,27 @@ IO1PIN  EQU 0xE0028010
 ; @PARAMETERS: None
 ; @RETURNS: R0 -> buttonIndex
 ;
+getKey
+  PUSH {R1-R12, LR}
+
+  MOV R0, #0  ; buttonIndex = 0
+  MOV R1, #1  ; listening = True
+  LDR R2, =IO1PIN
+  LDR R3, =0x00F00000
 
 
+gkWhile
+  CMP R1, #1  ; while(listening)
+  BNE gkEnd   ; {
+  LDR R4, [R2]  ; load[pins]
+  AND R4, R4, R3  ;
+  CMP R4, R3
+  BEQ gkWhile
+  MOV R1, #0  ; listening = False
+  B   gkWhile ; }
+
+  gkEnd
+  POP {R1-R12, PC}
 ; handleKey
 ; @PARAMETERS: R0 -> buttonIndex, R1 -> n, R2 -> prevN, R3 -> prevO
 ; @RETURNS: None
@@ -103,7 +122,14 @@ lastClear
 ; @RETURNS:
 ;
 fullClear
+  PUSH {R4-R12, LR}
 
+  MOV R0, #0
+  MOV R1, #0
+  MOV R2, #0
+  MOV R3, #0
+
+  POP {R4-R12, PC}
 ; reverseBits
 ; @PARAMETERS:
 ; @RETURNS:
@@ -123,23 +149,26 @@ delay
 
   POP {R0, PC}
 
-ldr	r1,=IO1DIR
-ldr	r2,=0x000f0000	;select P1.19--P1.16
-str	r2,[r1]		;make them outputs
-ldr	r1,=IO1SET
-str	r2,[r1]		;set them to turn the LEDs off
-ldr	r2,=IO1CLR
+; initSerial
+; @PARAMETERS: None
+; @RETURNS: None
+;
+  PUSH {R0-R12, LR}
+
+  LDR	R1, =IO1DIR
+  LDR	R2, =0x000f0000	;select P1.19--P1.16
+  STR	R2, [R1]		;make them outputs
+  LDR	R1, =IO1SET
+  STR	R2, [R1]		;set them to turn the LEDs off
+  LDR	R2, =IO1CLR
+
+  POP {R0-R12, PC}
 ; r1 points to the SET register
 ; r2 points to the CLEAR register
 
 ldr	r5,=0x00100000	; end when the mask reaches this value
 wloop	ldr	r3,=0x00010000	; start with P1.16.
 floop	str	r3,[r2]	   	; clear the bit -> turn on the LED
-
-;delay for about a half second
-ldr	r4,=4000000
-dloop	subs	r4,r4,#1
-bne	dloop
 
 str	r3,[r1]		;set the bit -> turn off the LED
 mov	r3,r3,lsl #1	;shift up to next bit. P1.16 -> P1.17 etc.
