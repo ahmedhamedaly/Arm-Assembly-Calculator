@@ -29,40 +29,40 @@ while           ; while (True) {
 ; @RETURNS: R0 -> buttonIndex
 ;
 getKey
-PUSH {R1-R12, LR}
+  PUSH {R1-R12, LR}
 
-MOV R0, #0  ; buttonIndex = 0
-LDR R1, =4000000 ; delay = 4000000
-LDR R2, =IO1PIN ; init[io1pins]
-LDR R3, =0x00F00000 ; maskPins = 0x00F00000
+  MOV R0, #0        ; buttonIndex = 0
+  LDR R1, =4000000  ; delay = 4000000
+  LDR R2, =IO1PIN   ; init[io1pins]
+  LDR R3, =0x00F00000 ; maskPins = 0x00F00000
 
-gkWhile           ; do {
-LDR R4, [R2]    ; load[pins]
-AND R4, R4, R3  ; pins = pins & mask
-CMP R4, R3      ; }
-BEQ gkWhile     ; while (pins == mask)
+  gkWhile           ; do {
+  LDR R4, [R2]      ; load[pins]
+  AND R4, R4, R3    ; pins = pins & mask
+  CMP R4, R3        ; }
+  BEQ gkWhile       ; while (pins == mask)
 
-MOV R5, R4      ; pressedButton = pins
+  MOV R5, R4        ; pressedButton = pins
 gkLongW
-CMP R5, R4      ; while (pressedButton == pins)
-BNE gkPress     ; {
-CMP R6, R1      ; if (delayCounter != delay)
-BEQ gkLong      ; {
-LDR R4, [R2]    ; load[pins]
-AND R4, R4, R3  ; pins = pins & mask
-ADD R6, R6, #1  ; delayCounter++
-B   gkLongW     ; }
+  CMP R5, R4        ; while (pressedButton == pins)
+  BNE gkPress       ; {
+  CMP R6, R1        ; if (delayCounter != delay)
+  BEQ gkLong        ; {
+  LDR R4, [R2]      ; load[pins]
+  AND R4, R4, R3    ; pins = pins & mask
+  ADD R6, R6, #1    ; delayCounter++
+  B   gkLongW       ; }
 
 gkLong
-MOV R0, R5      ; buttonIndex = pins
-BL  index
-RSB R0, R0, #0  ; NEG(buttonIndex)
-B   gkEnd
+  MOV R0, R5        ; buttonIndex = pins
+  BL  index         ; index(button)
+  RSB R0, R0, #0    ; NEG(buttonIndex)
+  B   gkEnd         ; }
 gkPress
-MOV R0, R5      ; buttonIndex = pins
-BL  index
+  MOV R0, R5        ; buttonIndex = pins
+  BL  index         ; index(button)
 
-gkEnd
+  gkEnd
 POP {R1-R12, PC}
 ; handleKey
 ; @PARAMETERS: R0 -> buttonIndex, R1 -> n, R2 -> prevN, R3 -> prevO
