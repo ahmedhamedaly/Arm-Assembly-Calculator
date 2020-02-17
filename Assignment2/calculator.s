@@ -10,17 +10,119 @@ start
 IO1DIR	EQU	0xE0028018
 IO1SET	EQU	0xE0028014
 IO1CLR	EQU	0xE002801C
+IO1PIN  EQU 0xE0028010
 
-; GetKey
+; getKey
 ; @PARAMETERS: None
-; @RETURNS: R12 -> key
+; @RETURNS: R0 -> buttonIndex
 ;
 
 
+; handleKey
+; @PARAMETERS: R0 -> buttonIndex, R1 -> n, R2 -> prevN, R3 -> prevO
+; @RETURNS: None
 ;
+handleKey
+  PUSH {R4-R12, LR}
+
+  CMP R0, #23
+  BEQ hkAdd
+  CMP R0, #22
+  BEQ hkSub
+  CMP R0, #21
+  BEQ hkAddOp
+  CMP R0, #20
+  BEQ hkSubOp
+  CMP R0, #-21
+  BEQ hkLastClear
+  CMP R0, #-20
+  BEQ hkFullClear
+  B   hkEnd
+
+hkAdd
+  BL  nAdd
+  B   hkEnd
+hkSub
+  BL  nSub
+  B   hkEnd
+hkAddOp
+  BL  addOp
+  B   hkEnd
+hkSubOp
+  BL  SubOp
+  B   hkEnd
+hkLastClear
+  BL  lastClear
+  B   hkEnd
+hkFullClear
+  BL  fullClear
+  B   hkEnd
+
+hkEnd
+  MOV R0, #0
+  POP {R4-R12, PC}
+
+; nAdd
+; @PARAMETERS: R1 -> n, R2 -> prevN, R3 -> prevO
+; @RETURNS:
 ;
+nAdd
+  PUSH {R0, R4-R12, LR}
+
+  ADD R1, R1, #1
+  MOV R2, #1
+  MOV R3, #1
+
+  POP {R0, R4-R12, LR}
+; nSub
+; @PARAMETERS:
+; @RETURNS:
 ;
+nSub
+
+; addOp
+; @PARAMETERS:
+; @RETURNS:
 ;
+addOP
+
+; subOp
+; @PARAMETERS:
+; @RETURNS:
+;
+subOp
+
+; lastClear
+; @PARAMETERS:
+; @RETURNS:
+;
+lastClear
+
+; fullClear
+; @PARAMETERS:
+; @RETURNS:
+;
+fullClear
+
+; reverseBits
+; @PARAMETERS:
+; @RETURNS:
+;
+
+
+; delay
+; @PARAMETERS: None
+; @RETURNS: None
+;
+delay
+  PUSH {R0, LR}
+
+  LDR	R0, =4000000
+  delayLoop	SUBS  R0, R0, #1
+  BNE	delayLoop
+
+  POP {R0, PC}
+
 ldr	r1,=IO1DIR
 ldr	r2,=0x000f0000	;select P1.19--P1.16
 str	r2,[r1]		;make them outputs
