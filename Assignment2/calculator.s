@@ -69,44 +69,39 @@ POP {R1-R12, PC}
 ; @RETURNS: None
 ;
 handleKey
-PUSH {R4-R12, LR}
+  PUSH {R4-R12, LR}
 
-CMP R0, #23
-BEQ hkAdd
-CMP R0, #22
-BEQ hkSub
-CMP R0, #21
-BEQ hkAddOp
-CMP R0, #20
-BEQ hkSubOp
-CMP R0, #-21
-BEQ hkLastClear
-CMP R0, #-20
-BEQ hkFullClear
-B   hkEnd
+  CMP R0, #23         ; if (add)
+  BNE hkSub           ; {
+  BL  nAdd            ; add()
+  B   hkEnd           ; }
 
-hkAdd
-BL  nAdd
-B   hkEnd
-hkSub
-BL  nSub
-B   hkEnd
-hkAddOp
-BL  addOp
-B   hkEnd
-hkSubOp
-BL  subOp
-B   hkEnd
-hkLastClear
-BL  lastClear
-B   hkEnd
-hkFullClear
-BL  fullClear
-B   hkEnd
+hkSub  CMP R0, #22    ; else if (sub)
+  BNE hkAddOp         ; {
+  BL  nSub            ; sub()
+  B   hkEnd           ; }
 
-hkEnd
-MOV R0, #0
-POP {R4-R12, PC}
+hkAddOp  CMP R0, #21  ; else if (addOp)
+  BNE hkSubOp         ; {
+  BL  addOp           ; addOp()
+  B   hkEnd           ; }
+
+hkSubOp  CMP R0, #20  ; else if (subOp)
+  BNE hkLastClear     ; {
+  BL  subOp           ; subOp()
+  B   hkEnd           ; }
+
+hkLastClear  CMP R0, #-21 ; else if (lastClear)
+  BEQ hkFullClear     ; {
+  BL  lastClear       ; lastClear()
+  B   hkEnd           ; }
+
+hkFullClear  CMP R0, #-20 ; else
+  BL  fullClear       ; { fullClear }
+
+  hkEnd
+  MOV R0, #0
+  POP {R4-R12, PC}
 
 ; nAdd
 ; @PARAMETERS: R1 -> n
