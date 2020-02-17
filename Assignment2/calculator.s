@@ -43,8 +43,7 @@ getKey
   BEQ gkWhile       ; while (pins == mask)
 
   MOV R5, R4        ; pressedButton = pins
-gkLongW
-  CMP R5, R4        ; while (pressedButton == pins)
+gkLongW CMP R5, R4  ; while (pressedButton == pins)
   BNE gkPress       ; {
   CMP R6, R1        ; if (delayCounter != delay)
   BEQ gkLong        ; {
@@ -63,7 +62,8 @@ gkPress
   BL  index         ; index(button)
 
   gkEnd
-POP {R1-R12, PC}
+  POP {R1-R12, PC}
+
 ; handleKey
 ; @PARAMETERS: R0 -> buttonIndex, R1 -> n, R2 -> prevN, R3 -> prevO
 ; @RETURNS: None
@@ -99,8 +99,9 @@ hkLastClear  CMP R0, #-21 ; else if (lastClear)
 hkFullClear  CMP R0, #-20 ; else
   BL  fullClear       ; { fullClear }
 
-  hkEnd
-  MOV R0, #0
+hkEnd
+  MOV R0, #0          ; buttonIndex = 0
+
   POP {R4-R12, PC}
 
 ; nAdd
@@ -108,97 +109,104 @@ hkFullClear  CMP R0, #-20 ; else
 ; @RETURNS:
 ;
 nAdd
-PUSH {R0, R2-R12, LR}
+  PUSH {R0, R2-R12, LR}
 
-ADD R1, R1, #1  ; n++
+  ADD R1, R1, #1  ; n++
 
-POP {R0, R2-R12, PC}
+  POP {R0, R2-R12, PC}
+
 ; nSub
 ; @PARAMETERS: R1 -> n
 ; @RETURNS:
 ;
 nSub
-PUSH {R0, R2-R12, LR}
+  PUSH {R0, R2-R12, LR}
 
-SUB R1, R1, #1  ; n--
+  SUB R1, R1, #1  ; n--
 
-POP {R0, R2-R12, PC}
+  POP {R0, R2-R12, PC}
+
 ; addOp
 ; @PARAMETERS: R1 -> n, R2 -> prevN, R3 -> prevO
 ; @RETURNS:
 ;
 addOp
-PUSH {R0, R4-R12, LR}
+  PUSH {R0, R4-R12, LR}
 
-ADD R4, R1, R2  ; temp = n + prevN
-MOV R3, #1  ; prevO = True
-MOV R2, #0  ; prevN = n
-MOV R1, R4  ; n = temp
+  ADD R4, R1, R2  ; temp = n + prevN
+  MOV R3, #1  ; prevO = True
+  MOV R2, #0  ; prevN = n
+  MOV R1, R4  ; n = temp
 
 POP {R0, R4-R12, PC}
+
 ; subOp
 ; @PARAMETERS: R1 -> n, R2 -> prevN, R3 -> prevO
-; @RETURNS:
+; @RETURNS: None
 ;
 subOp
-PUSH {R0, R4-R12, LR}
+  PUSH {R0, R4-R12, LR}
 
-SUB R4, R1, R2  ; temp = n + prevN
-MOV R3, #1  ; prevO = True
-MOV R2, R1  ; prevN = n
-MOV R1, R4  ; n = temp
+  SUB R4, R1, R2  ; temp = n + prevN
+  MOV R3, #1  ; prevO = True
+  MOV R2, R1  ; prevN = n
+  MOV R1, R4  ; n = temp
 
 POP {R0, R4-R12, PC}
+
 ; lastClear
 ; @PARAMETERS: R2 -> prevN, R3 -> prevO
-; @RETURNS:
+; @RETURNS: None
 ;
 lastClear
-PUSH {R0-R1, R4-R12, LR}
+  PUSH {R0-R1, R4-R12, LR}
 
-MOV R2, #0  ; prevN = 0
-MOV R3, #0  ; prevO = 0
+  MOV R2, #0  ; prevN = 0
+  MOV R3, #0  ; prevO = 0
 
-POP {R0-R1, R4-R12, LR}
+  POP {R0-R1, R4-R12, LR}
+
 ; fullClear
-; @PARAMETERS:
-; @RETURNS:
+; @PARAMETERS: R0 -> buttonIndex, R1 -> n, R2 -> prevN, R3 -> prevO
+; @RETURNS: None
 ;
 fullClear
-PUSH {R4-R12, LR}
+  PUSH {R4-R12, LR}
 
-MOV R0, #0
-MOV R1, #0
-MOV R2, #0
-MOV R3, #0
-BL  initSerial
+  MOV R0, #0        ; buttonIndex = 0
+  MOV R1, #0        ; n = 0
+  MOV R2, #0        ; prevN = 0
+  MOV R3, #0        ; prevO = 0
+  BL  initSerial    ; led(off)
 
-POP {R4-R12, PC}
+  POP {R4-R12, PC}
+
 ; reverseBits
 ; @PARAMETERS: R1 -> n
 ; @RETURNS: R12 -> rev
 ;
 reverseBits
-PUSH {R0, R2-R11, LR}
+  PUSH {R0, R2-R11, LR}
 
-MOV R0, #3              	; num_of_bits = 4
-AND R2, R1, #0x0000000F			; revN = n & 0x0000000F
-MOV R3, #1                  ; mask = 1
-MOV	R4, #0                  ; rev = 0
+  MOV R0, #3              	  ; num_of_bits = 3
+  AND R2, R1, #0x0000000F			; revN = n & 0x0000000F
+  MOV R3, #1                  ; mask = 1
+  MOV	R4, #0                  ; rev = 0
 
-rbWhile CMP R2, #0              ; while (n > 0)
-beq rbEnd                ; {
-AND R5, R3, R2              ;   bit = n & mask
-cmp r5, #0                  ;   if (bit != 0)
-beq rbElse                    ;   {
-ORR R4, R4, R3, LSL R0      ;     result |= 1 << num_bits
-rbElse                          ;   }
-mov r2, r2, lsr #1          ;   num >>= 1
-sub r0, r0, #1              ;   num_bits--
-B rbWhile                   ; }
+rbWhile CMP R2, #0            ; while (n > 0)
+  BEQ rbEnd                   ; {
+  AND R5, R3, R2              ; bit = n & mask
+  CMP r5, #0                  ; if (bit != 0)
+  BEQ rbElse                  ; {
+  ORR R4, R4, R3, LSL R0      ; result |= 1 << num_of_bits
+rbElse                        ; }
+  MOV r2, r2, lsr #1          ; n >>= 1
+  SUB r0, r0, #1              ; num_of_bits--
+  B rbWhile                   ; }
+
 rbEnd
-mov r12, r4                  ; reversed = result
-POP {R0, R2-R11, PC}
+  MOV R12, R4                  ; reversed = result
+  POP {R0, R2-R11, PC}
 
 ; displayN
 ; @PARAMETERS: R1 -> n
@@ -207,67 +215,59 @@ POP {R0, R2-R11, PC}
 displayN
   PUSH {R0, R2-R12, LR}
 
-  LDR	R2, =IO1CLR
-  BL reverseBits
-  LSL R12, R12, #16
-  STR R12, [R2]
+  LDR	R2, =IO1CLR     ; load(io1clr)
+  BL reverseBits      ; reverseBits(n)
+  LSL R12, R12, #16   ; on = reversedN << 16
+  STR R12, [R2]       ; led(on)
 
 POP {R0, R2-R12, PC}
-
-; delay
-; @PARAMETERS: None
-; @RETURNS: None
-;
-delay
-PUSH {R0, LR}
-
-LDR	R0, =4000000
-delayLoop SUBS  R0, R0, #1
-BNE	delayLoop
-
-POP {R0, PC}
 
 ; index
 ; @PARAMETERS: R0 -> pins
 ; @RETURNS: R0 -> buttonIndex
 ;
 index
-PUSH {R1-R12, LR}
+  PUSH {R1-R12, LR}
 
-LDR R1, =0x00E00000
-LDR R2, =0x00D00000
-LDR R3, =0x00B00000
-LDR R4, =0x00700000
+  LDR R1, =0x00E00000   ; p1.20
+  LDR R2, =0x00D00000   ; p1.21
+  LDR R3, =0x00B00000   ; p1.22
+  LDR R4, =0x00700000   ; p1.23
 
-CMP R0, R1
-BNE iTwo
-MOV R0, #20
-B   iEnd
-iTwo CMP R0, R2
-BNE iThree
-MOV R0, #21
-B   iEnd
-iThree CMP R0, R3
-BNE iFour
-MOV R0, #22
-B   iEnd
+  CMP R0, R1        ; if (pins == p1.20)
+  BNE iTwo          ; {
+  MOV R0, #20       ; buttonIndex = 20
+  B   iEnd          ; }
+
+iTwo CMP R0, R2     ; if (pins == p1.21)
+  BNE iThree        ; {
+  MOV R0, #21       ; buttonIndex = 21
+  B   iEnd          ; }
+
+iThree CMP R0, R3   ; if (pins == 1.22)
+  BNE iFour         ; {
+  MOV R0, #22       ; buttonIndex = 22
+  B   iEnd          ; }
+
 iFour
-MOV R0, #23
+  MOV R0, #23       ; else { buttonIndex = 23 }
 
-iEnd
-POP {R1-R12, PC}
+  iEnd
+  POP {R1-R12, PC}
+
 ; initSerial
 ; @PARAMETERS: None
 ; @RETURNS: None
 ;
 initSerial
-PUSH {R0-R12, LR}
+  PUSH {R0-R12, LR}
 
-LDR	R1, =IO1DIR
-LDR	R2, =0x000f0000	;select P1.19--P1.16
-STR	R2, [R1]		;make them outputs
-LDR	R1, =IO1SET
-STR	R2, [R1]		;set them to turn the LEDs off
+  LDR	R1, =IO1DIR     ; load(io1dir)
+  LDR	R2, =0x000f0000	; select P1.19--P1.16
+  STR	R2, [R1]	     	; make them outputs
+  LDR	R1, =IO1SET     ; load(io1set)
+  STR	R2, [R1]		    ; set them to turn the LEDs off
 
-POP {R0-R12, PC}
+  POP {R0-R12, PC}
+
 END
